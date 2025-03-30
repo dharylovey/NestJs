@@ -50,14 +50,25 @@ export class AuthController {
 
   @UseGuards(JwtGuard)
   @Post('refresh')
-  async refresh(@Body('userId') userId: string, @Res() res: Response) {
-    const tokens = await this.authService.refresh(userId, res);
-    return res.json(tokens);
+  async refresh(@Req() req: ExtendedRequest, @Res() res: Response) {
+    const data = await this.authService.refresh(res, req);
+    return res.json({
+      message: 'Refresh successful',
+      data: {
+        userId: data.userId,
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+      },
+    });
   }
 
   @UseGuards(JwtGuard)
   @Get('session')
-  session() {
-    return { message: 'Session is valid' };
+  session(@Req() req: ExtendedRequest) {
+    if (!req.user) {
+      throw new UnauthorizedException('User not authenticated');
+    }
+
+    return { message: 'Valid session', user: req.user };
   }
 }
