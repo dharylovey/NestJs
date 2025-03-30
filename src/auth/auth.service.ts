@@ -54,7 +54,6 @@ export class AuthService {
 
     await this.redisService.set(`refreshToken:${userId}`, refreshToken, 60 * 60 * 24 * 30); // 30 days
     const storedToken = await this.redisService.get(`refreshToken:${userId}`);
-    console.log('Stored Refresh Token:', storedToken);
 
     res.cookie('Authentication', accessToken, {
       httpOnly: true,
@@ -94,7 +93,6 @@ export class AuthService {
   }
 
   async logout(userId: string) {
-    console.log(userId);
     await this.redisService.del(`refreshToken:${userId}`);
   }
 }
