@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { verify } from 'argon2';
+import { hash, verify } from 'argon2';
 import { Response } from 'express';
 import { RedisService } from '../redis/redis.service';
 import { CreateUserDto } from '../users/dto/create-user.dto';
@@ -21,6 +21,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly redisService: RedisService,
   ) {}
+
   async register(createUserDto: CreateUserDto) {
     try {
       return await this.usersService.create(createUserDto);
@@ -43,23 +44,18 @@ export class AuthService {
 
   async login(userId: string, res: Response) {
     const { refreshToken, accessToken } = await this.generateTokens(userId);
-    console.log('Refresh Token:', refreshToken);
-    console.log('Access Token:', accessToken);
 
-    console.log(`Setting Redis Key: refreshToken:${userId}`);
-    await this.redisService.set(`refreshToken:${userId}`, refreshToken, 60 * 60 * 24 * 30); // 30 day
+    const hashedRefreshToken = await hash(refreshToken);
 
-    console.log(`Fetching Redis Key: refreshToken:${userId}`);
-    await this.redisService.get(`refreshToken:${userId}`);
+    await this.redisService.set(`refreshToken:${userId}`, hashedRefreshToken, 60 * 60 * 24 * 30); // 30 days
 
     this.cookieGenerator(res, accessToken, refreshToken);
 
-    return { userId, accessToken, refreshToken };
+    return { message: 'Login successful', userId, accessToken };
   }
 
   async refresh(res: Response, req: ExtendedRequest) {
     try {
-      console.log('Refresh Token:', req.cookies.RefreshToken);
       const refreshToken = req.cookies['RefreshToken'];
 
       if (!refreshToken) {
@@ -71,13 +67,16 @@ export class AuthService {
       });
 
       const userId = decoded.sub;
-      console.log('Decoded User ID from Refresh Token:', userId);
+      const storedHashedRefreshToken = await this.redisService.get(`refreshToken:${userId}`);
 
-      const storedRefreshToken = await this.redisService.get(`refreshToken:${userId}`);
-      console.log(`Fetching Redis Key: refreshToken:${userId}`);
+      if (!storedHashedRefreshToken) {
+        throw new UnauthorizedException('Refresh token expired or invalid');
+      }
 
-      if (!storedRefreshToken || storedRefreshToken !== refreshToken) {
-        throw new UnauthorizedException('Invalid or reused refresh token');
+      const isRefreshTokenValid = await verify(storedHashedRefreshToken, refreshToken);
+
+      if (!isRefreshTokenValid) {
+        throw new UnauthorizedException('Invalid refresh token');
       }
 
       await this.redisService.del(`refreshToken:${userId}`);
@@ -139,11 +138,13 @@ export class AuthService {
       expires: new Date(Date.now() + 1000 * 60 * 60 * 24), // 1 day
     });
 
-    res.cookie('RefreshToken', newRefreshToken, {
-      httpOnly: true,
-      secure: this.configService.get<string>('NODE_ENV') === 'production',
-      expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
-    });
+    if (newRefreshToken) {
+      res.cookie('RefreshToken', newRefreshToken, {
+        httpOnly: true,
+        secure: this.configService.get<string>('NODE_ENV') === 'production',
+        expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
+      });
+    }
   }
 
   async validateJwt(userId: string) {

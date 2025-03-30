@@ -64,6 +64,7 @@ export class AuthController {
   @UseGuards(JwtGuard)
   @Get('session')
   session(@Req() req: ExtendedRequest) {
+    console.log(req.cookies.Authentication);
     if (!req.user) {
       throw new UnauthorizedException('User not authenticated');
     }
