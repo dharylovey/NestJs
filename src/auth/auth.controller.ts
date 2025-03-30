@@ -57,7 +57,6 @@ export class AuthController {
       data: {
         userId: data.userId,
         accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
       },
     });
   }

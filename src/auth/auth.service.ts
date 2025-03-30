@@ -76,24 +76,17 @@ export class AuthService {
       const storedRefreshToken = await this.redisService.get(`refreshToken:${userId}`);
       console.log(`Fetching Redis Key: refreshToken:${userId}`);
 
-      // Check if the stored token matches
       if (!storedRefreshToken || storedRefreshToken !== refreshToken) {
         throw new UnauthorizedException('Invalid or reused refresh token');
       }
 
-      // Immediately invalidate the old refresh token
       await this.redisService.del(`refreshToken:${userId}`);
 
-      // Generate a new refresh and access token
-      const { accessToken, refreshToken: newRefreshToken } = await this.generateTokens(userId);
+      const { accessToken } = await this.generateAccessToken(userId);
 
-      // Store the new refresh token in Redis
-      await this.redisService.set(`refreshToken:${userId}`, newRefreshToken, 60 * 60 * 24 * 30);
+      this.cookieGenerator(res, accessToken);
 
-      // Set new cookies
-      this.cookieGenerator(res, accessToken, newRefreshToken);
-
-      return { userId, accessToken, refreshToken: newRefreshToken };
+      return { userId, accessToken };
     } catch (error) {
       console.error(error);
       throw new UnauthorizedException('Invalid refresh token');
@@ -102,6 +95,17 @@ export class AuthService {
 
   async logout(userId: string) {
     await this.redisService.del(`refreshToken:${userId}`);
+  }
+
+  private async generateAccessToken(userId: string) {
+    const accessToken = await this.jwtService.signAsync(
+      { sub: userId },
+      {
+        secret: this.configService.get<string>('JWT_SECRET'),
+        expiresIn: this.configService.get<string>('JWT_EXPIRES_IN'),
+      },
+    );
+    return { accessToken };
   }
 
   private async generateTokens(userId: string) {
@@ -127,7 +131,7 @@ export class AuthService {
   private cookieGenerator(
     res: Response<any, Record<string, any>>,
     accessToken: string,
-    newRefreshToken: string,
+    newRefreshToken?: string,
   ) {
     res.cookie('Authentication', accessToken, {
       httpOnly: true,
