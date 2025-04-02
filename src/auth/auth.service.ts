@@ -30,7 +30,10 @@ export class AuthService {
     }
   }
 
-  async validateUser(email: string, password: string) {
+  async validateUser(
+    email: string,
+    password: string,
+  ): Promise<{ id: string; email: string }> {
     const user = await this.usersService.findByEmail(email);
     if (!user) {
       throw new NotFoundException('User not found');
@@ -42,19 +45,29 @@ export class AuthService {
     return { id: user.id, email: user.email };
   }
 
-  async login(userId: string, res: Response) {
+  async login(
+    userId: string,
+    res: Response,
+  ): Promise<{ message: string; userId: string; accessToken: string }> {
     const { refreshToken, accessToken } = await this.generateTokens(userId);
 
     const hashedRefreshToken = await hash(refreshToken);
 
-    await this.redisService.set(`refreshToken:${userId}`, hashedRefreshToken, 60 * 60 * 24 * 30); // 30 days
+    await this.redisService.set(
+      `refreshToken:${userId}`,
+      hashedRefreshToken,
+      60 * 60 * 24 * 30,
+    ); // 30 days
 
     this.cookieGenerator(res, accessToken, refreshToken);
 
     return { message: 'Login successful', userId, accessToken };
   }
 
-  async refresh(res: Response, req: ExtendedRequest) {
+  async refresh(
+    res: Response,
+    req: ExtendedRequest,
+  ): Promise<{ userId: string; accessToken: string }> {
     try {
       const refreshToken = req.cookies['RefreshToken'];
 
@@ -67,23 +80,34 @@ export class AuthService {
       });
 
       const userId = decoded.sub;
-      const storedHashedRefreshToken = await this.redisService.get(`refreshToken:${userId}`);
+      const storedHashedRefreshToken = await this.redisService.get(
+        `refreshToken:${userId}`,
+      );
 
       if (!storedHashedRefreshToken) {
         throw new UnauthorizedException('Refresh token expired or invalid');
       }
 
-      const isRefreshTokenValid = await verify(storedHashedRefreshToken, refreshToken);
+      const isRefreshTokenValid = await verify(
+        storedHashedRefreshToken,
+        refreshToken,
+      );
 
       if (!isRefreshTokenValid) {
         throw new UnauthorizedException('Invalid refresh token');
       }
 
-      await this.redisService.del(`refreshToken:${userId}`);
+      const { refreshToken: newRefreshToken, accessToken } =
+        await this.generateTokens(userId);
+      const hashedNewRefreshToken = await hash(newRefreshToken);
 
-      const { accessToken } = await this.generateAccessToken(userId);
+      await this.redisService.set(
+        `refreshToken:${userId}`,
+        hashedNewRefreshToken,
+        60 * 60 * 24 * 30, // 30 days
+      );
 
-      this.cookieGenerator(res, accessToken);
+      this.cookieGenerator(res, accessToken, newRefreshToken);
 
       return { userId, accessToken };
     } catch (error) {
@@ -92,7 +116,53 @@ export class AuthService {
     }
   }
 
-  async logout(userId: string) {
+  // async refresh(
+  //   res: Response,
+  //   req: ExtendedRequest,
+  // ): Promise<{ userId: string; accessToken: string }> {
+  //   try {
+  //     const refreshToken = req.cookies['RefreshToken'];
+
+  //     if (!refreshToken) {
+  //       throw new UnauthorizedException('Refresh token not found');
+  //     }
+
+  //     const decoded = this.jwtService.verify(refreshToken, {
+  //       secret: this.configService.get<string>('REFRESH_JWT_SECRET'),
+  //     });
+
+  //     const userId = decoded.sub;
+  //     const storedHashedRefreshToken = await this.redisService.get(
+  //       `refreshToken:${userId}`,
+  //     );
+
+  //     if (!storedHashedRefreshToken) {
+  //       throw new UnauthorizedException('Refresh token expired or invalid');
+  //     }
+
+  //     const isRefreshTokenValid = await verify(
+  //       storedHashedRefreshToken,
+  //       refreshToken,
+  //     );
+
+  //     if (!isRefreshTokenValid) {
+  //       throw new UnauthorizedException('Invalid refresh token');
+  //     }
+
+  //     await this.redisService.del(`refreshToken:${userId}`);
+
+  //     const { accessToken } = await this.generateAccessToken(userId);
+
+  //     this.cookieGenerator(res, accessToken);
+
+  //     return { userId, accessToken };
+  //   } catch (error) {
+  //     console.error(error);
+  //     throw new UnauthorizedException('Invalid refresh token');
+  //   }
+  // }
+
+  async logout(userId: string): Promise<void> {
     await this.redisService.del(`refreshToken:${userId}`);
   }
 
@@ -107,7 +177,9 @@ export class AuthService {
     return { accessToken };
   }
 
-  private async generateTokens(userId: string) {
+  private async generateTokens(
+    userId: string,
+  ): Promise<{ refreshToken: string; accessToken: string }> {
     const [refreshToken, accessToken] = await Promise.all([
       this.jwtService.signAsync(
         { sub: userId },
@@ -125,6 +197,14 @@ export class AuthService {
       ),
     ]);
     return { refreshToken, accessToken };
+  }
+
+  async validateJwt(userId: string): Promise<{ id: string; email: string }> {
+    const user = await this.usersService.findOne(userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    return { id: user.id, email: user.email };
   }
 
   private cookieGenerator(
@@ -145,13 +225,5 @@ export class AuthService {
         expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
       });
     }
-  }
-
-  async validateJwt(userId: string) {
-    const user = await this.usersService.findOne(userId);
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-    return { id: user.id, email: user.email };
   }
 }

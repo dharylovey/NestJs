@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Post,
   Req,
   Res,
@@ -14,6 +16,7 @@ import { AuthService } from './auth.service';
 import { JwtGuard } from './guards/jwt.guard';
 import { LocalGuard } from './guards/locel.guard';
 import { LoginUserDto } from './dto/login-user.dto';
+import { Public } from './decorators/public.decorators';
 
 export interface ExtendedRequest extends Request {
   user: { id: string; email: string };
@@ -23,12 +26,17 @@ export interface ExtendedRequest extends Request {
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Public()
   @Post('register')
+  @HttpCode(HttpStatus.CREATED)
   async register(@Body() createUserDto: CreateUserDto) {
     return await this.authService.register(createUserDto);
   }
+
+  @Public()
   @UseGuards(LocalGuard)
   @Post('login')
+  @HttpCode(HttpStatus.OK)
   async login(
     @Body() body: LoginUserDto,
     @Req() req: ExtendedRequest,
@@ -39,11 +47,15 @@ export class AuthController {
 
   @UseGuards(JwtGuard)
   @Post('logout')
-  async logout(@Res({ passthrough: true }) res: Response, @Req() req: ExtendedRequest) {
+  async logout(
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: ExtendedRequest,
+  ) {
     if (!req.user) {
       throw new UnauthorizedException('User not authenticated');
     }
     res.clearCookie('Authentication');
+    res.clearCookie('RefreshToken');
     await this.authService.logout(req.user.id);
     return { message: 'Logout successful' };
   }
