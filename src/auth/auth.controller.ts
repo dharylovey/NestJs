@@ -17,6 +17,7 @@ import { JwtGuard } from './guards/jwt.guard';
 import { LocalGuard } from './guards/locel.guard';
 import { LoginUserDto } from './dto/login-user.dto';
 import { Public } from './decorators/public.decorators';
+import { SkipThrottle } from '@nestjs/throttler';
 
 export interface ExtendedRequest extends Request {
   user: { id: string; email: string };
@@ -45,6 +46,7 @@ export class AuthController {
     return await this.authService.login(req.user.id, res);
   }
 
+  @SkipThrottle()
   @UseGuards(JwtGuard)
   @Post('logout')
   async logout(

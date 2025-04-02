@@ -1,17 +1,42 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerProxyGuard } from 'src/throttler-guard';
 import { UsersModule } from 'src/users/users.module';
 import { DatabaseModule } from '../database/database.module';
+import { RedisModule } from '../redis/redis.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { LocalGuard } from './guards/locel.guard';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
-import { RedisModule } from '../redis/redis.module';
 
 @Module({
-  imports: [UsersModule, DatabaseModule, JwtModule, RedisModule],
-  providers: [AuthService, LocalStrategy, LocalGuard, JwtStrategy],
+  imports: [
+    UsersModule,
+    DatabaseModule,
+    JwtModule,
+    RedisModule,
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60, // 60 seconds
+          limit: 10,
+        },
+      ],
+    }),
+  ],
+  providers: [
+    AuthService,
+    LocalStrategy,
+    LocalGuard,
+    JwtStrategy,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerProxyGuard,
+    },
+  ],
   controllers: [AuthController],
 })
 export class AuthModule {}
