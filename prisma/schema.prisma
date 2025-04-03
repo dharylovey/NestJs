@@ -45,7 +45,6 @@ model Voter {
   middleName     String?
   gender         Gender
   birthDate      DateTime?
-  group          String?
   precintNumber  String
   legendary      String?
   status         VoterStatus?
