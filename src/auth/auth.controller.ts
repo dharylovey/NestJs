@@ -86,7 +86,7 @@ export class AuthController {
     });
   }
 
-  // @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute
   @UseGuards(JwtGuard)
   @Get('session')
   session(@Req() req: ExtendedRequest) {
