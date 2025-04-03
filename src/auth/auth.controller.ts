@@ -17,7 +17,7 @@ import { JwtGuard } from './guards/jwt.guard';
 import { LocalGuard } from './guards/locel.guard';
 import { LoginUserDto } from './dto/login-user.dto';
 import { Public } from './decorators/public.decorators';
-import { SkipThrottle } from '@nestjs/throttler';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 
 export interface ExtendedRequest extends Request {
   user: { id: string; email: string };
@@ -31,10 +31,15 @@ export class AuthController {
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() createUserDto: CreateUserDto) {
-    return await this.authService.register(createUserDto);
+    try {
+      return await this.authService.register(createUserDto);
+    } catch (error) {
+      throw new UnauthorizedException(error.message);
+    }
   }
 
   @Public()
+  // @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute
   @UseGuards(LocalGuard)
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -43,10 +48,15 @@ export class AuthController {
     @Req() req: ExtendedRequest,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return await this.authService.login(req.user.id, res);
+    try {
+      return await this.authService.login(req.user.id, res);
+    } catch (error) {
+      throw new UnauthorizedException(error.message);
+    }
   }
 
   @SkipThrottle()
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute
   @UseGuards(JwtGuard)
   @Post('logout')
   async logout(
@@ -62,6 +72,7 @@ export class AuthController {
     return { message: 'Logout successful' };
   }
 
+  // @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute
   @UseGuards(JwtGuard)
   @Post('refresh')
   async refresh(@Req() req: ExtendedRequest, @Res() res: Response) {
@@ -75,6 +86,7 @@ export class AuthController {
     });
   }
 
+  // @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute
   @UseGuards(JwtGuard)
   @Get('session')
   session(@Req() req: ExtendedRequest) {

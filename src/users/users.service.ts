@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { DatabaseService } from '../database/database.service';
@@ -21,7 +25,13 @@ export class UsersService {
         ...createUserDto,
         password: await hash(createUserDto.password),
       },
-      select: { id: true, name: true, email: true, createdAt: true, updatedAt: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     return {
@@ -50,6 +60,22 @@ export class UsersService {
     return user;
   }
 
+  async updateRefreshToken(userId: string, refreshToken: string) {
+    await this.prismaService.user.update({
+      where: { id: userId },
+      data: { refreshToken },
+    });
+  }
+
+  async getRefreshToken(userId: string) {
+    const user = await this.prismaService.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user.refreshToken;
+  }
   async update(id: string, updateUserDto: UpdateUserDto) {
     const existingUser = await this.prismaService.user.findUnique({
       where: { id },
@@ -81,7 +107,13 @@ export class UsersService {
 
     return await this.prismaService.user.delete({
       where: { id },
-      select: { id: true, name: true, email: true, createdAt: true, updatedAt: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
   }
 }
