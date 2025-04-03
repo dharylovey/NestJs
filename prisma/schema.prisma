@@ -51,16 +51,16 @@ model Voter {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   municipality   Municipality @relation(fields: [municipalityId], references: [id])
-  municipalityId String
+  municipalityId Int
   barangay       Barangay     @relation(fields: [barangayId], references: [id])
-  barangayId     String
+  barangayId     Int
 
   @@index([firstName, lastName, middleName, birthDate])
   @@index([precintNumber])
 }
 
 model Municipality {
-  id        String     @id @default(uuid())
+  id        Int        @id @default(autoincrement())
   name      String     @unique
   barangays Barangay[]
   voters    Voter[]
@@ -69,12 +69,12 @@ model Municipality {
 }
 
 model Barangay {
-  id             String       @id @default(uuid())
+  id             Int          @id @default(autoincrement())
   name           String
   voters         Voter[]
   createdAt      DateTime     @default(now())
   municipality   Municipality @relation(fields: [municipalityId], references: [id])
-  municipalityId String
+  municipalityId Int
 
   @@unique([name, municipalityId])
 }

@@ -1,15 +1,23 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateVoterDto } from './dto/create-voter.dto';
 import { UpdateVoterDto } from './dto/update-voter.dto';
+import { DatabaseService } from '../database/database.service';
 
 @Injectable()
 export class VotersService {
-  create(createVoterDto: CreateVoterDto) {
-    return 'This action adds a new voter';
+  constructor(private readonly prismaService: DatabaseService) {}
+  async createVoter(createVoterDto: CreateVoterDto) {
+    return this.prismaService.voter.create({
+      data: { ...createVoterDto },
+    });
   }
 
-  findAll() {
-    return `This action returns all voters`;
+  async findAll() {
+    return await this.prismaService.voter.findMany();
   }
 
   findOne(id: number) {

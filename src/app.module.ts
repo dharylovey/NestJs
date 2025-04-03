@@ -10,6 +10,8 @@ import { LoggerMiddleware } from './middleware/logger.middleware';
 import { VotersModule } from './voters/voters.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { MunicipalityModule } from './municipality/municipality.module';
+import { BarangayModule } from './barangay/barangay.module';
 
 @Module({
   imports: [
@@ -29,6 +31,8 @@ import { APP_GUARD } from '@nestjs/core';
         },
       ],
     }),
+    MunicipalityModule,
+    BarangayModule,
   ],
   controllers: [AppController],
   providers: [

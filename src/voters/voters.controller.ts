@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { VotersService } from './voters.service';
 import { CreateVoterDto } from './dto/create-voter.dto';
 import { UpdateVoterDto } from './dto/update-voter.dto';
@@ -8,13 +16,15 @@ export class VotersController {
   constructor(private readonly votersService: VotersService) {}
 
   @Post()
-  create(@Body() createVoterDto: CreateVoterDto) {
-    return this.votersService.create(createVoterDto);
+  async createVoter(@Body() createVoterDto: CreateVoterDto) {
+    const voter = await this.votersService.createVoter(createVoterDto);
+    return { mesage: 'success', data: voter };
   }
 
   @Get()
-  findAll() {
-    return this.votersService.findAll();
+  async findAll() {
+    const voters = await this.votersService.findAll();
+    return { mesage: 'success', data: voters };
   }
 
   @Get(':id')

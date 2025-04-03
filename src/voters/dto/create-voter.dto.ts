@@ -1,5 +1,11 @@
 import { Gender, VoterStatus } from '@prisma/client';
-import { IsEnum, IsString } from 'class-validator';
+import {
+  IsEnum,
+  IsString,
+  IsOptional,
+  IsDate,
+  IsNumber,
+} from 'class-validator';
 
 export class CreateVoterDto {
   @IsString()
@@ -8,27 +14,31 @@ export class CreateVoterDto {
   @IsString()
   lastName: string;
 
+  @IsOptional()
   @IsString()
   middleName?: string;
 
   @IsEnum(Gender)
   gender: Gender;
 
-  @IsString()
+  @IsOptional()
+  @IsDate()
   birthDate?: Date;
 
   @IsString()
-  precintNumber: String;
+  precintNumber: string;
 
+  @IsOptional()
   @IsString()
-  legendary?: String;
+  legendary?: string;
 
+  @IsOptional()
   @IsEnum(VoterStatus)
   status?: VoterStatus;
 
-  @IsString()
-  municipalityId: string;
+  @IsNumber()
+  municipalityId: number;
 
-  @IsString()
-  barangayId: string;
+  @IsNumber()
+  barangayId: number;
 }
