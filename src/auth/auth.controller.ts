@@ -39,7 +39,7 @@ export class AuthController {
   }
 
   @Public()
-  // @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute
   @UseGuards(LocalGuard)
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -72,7 +72,7 @@ export class AuthController {
     return { message: 'Logout successful' };
   }
 
-  // @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute
   @UseGuards(JwtGuard)
   @Post('refresh')
   async refresh(@Req() req: ExtendedRequest, @Res() res: Response) {
