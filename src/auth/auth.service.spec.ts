@@ -3,7 +3,6 @@ import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { RedisService } from '../redis/redis.service'; // Import RedisService
 
 describe('AuthService', () => {
   let authService: AuthService;
@@ -30,14 +29,6 @@ describe('AuthService', () => {
           provide: ConfigService,
           useValue: {
             get: jest.fn().mockReturnValue('mockConfigValue'),
-          },
-        },
-        {
-          provide: RedisService, // ✅ Mock RedisService
-          useValue: {
-            set: jest.fn(),
-            get: jest.fn(),
-            del: jest.fn(),
           },
         },
       ],

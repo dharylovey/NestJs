@@ -5,7 +5,6 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerProxyGuard } from 'src/throttler-guard';
 import { UsersModule } from 'src/users/users.module';
 import { DatabaseModule } from '../database/database.module';
-import { RedisModule } from '../redis/redis.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { LocalGuard } from './guards/locel.guard';
@@ -17,7 +16,6 @@ import { LocalStrategy } from './strategies/local.strategy';
     UsersModule,
     DatabaseModule,
     JwtModule,
-    RedisModule,
     ThrottlerModule.forRoot({
       throttlers: [
         {
