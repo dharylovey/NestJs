@@ -8,7 +8,6 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { hash, verify } from 'argon2';
 import { Response } from 'express';
-import { RedisService } from '../redis/redis.service';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { UsersService } from '../users/users.service';
 import { ExtendedRequest } from './auth.controller';
@@ -19,7 +18,6 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly redisService: RedisService,
   ) {}
 
   async register(createUserDto: CreateUserDto) {
@@ -108,9 +106,7 @@ export class AuthService {
     }
   }
 
-  async logout(userId: string): Promise<void> {
-    await this.redisService.del(`refreshToken:${userId}`);
-  }
+  async logout(userId: string): Promise<void> {}
 
   // private async generateAccessToken(userId: string) {
   //   const accessToken = await this.jwtService.signAsync(
