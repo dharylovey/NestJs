@@ -73,7 +73,7 @@ model Barangay {
   name           String
   voters         Voter[]
   createdAt      DateTime     @default(now())
-  municipality   Municipality @relation(fields: [municipalityId], references: [id])
+  municipality   Municipality @relation(fields: [municipalityId], references: [id], onDelete: Cascade)
   municipalityId Int
 
   @@unique([name, municipalityId])

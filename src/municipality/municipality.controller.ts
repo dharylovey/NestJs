@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { MunicipalityService } from './municipality.service';
 import { CreateMunicipalityDto } from './dto/create-municipality.dto';
@@ -24,7 +25,7 @@ export class MunicipalityController {
   }
 
   @Get()
-  findAll() {
+  findAll(@Query('barangayId') barangayId?: string) {
     return this.municipalityService.findAll();
   }
 
