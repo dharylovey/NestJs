@@ -5,7 +5,6 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './database/database.module';
-import { RedisModule } from './redis/redis.module';
 import { LoggerMiddleware } from './middleware/logger.middleware';
 import { VotersModule } from './voters/voters.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -21,7 +20,6 @@ import { BarangayModule } from './barangay/barangay.module';
       isGlobal: true,
     }),
     DatabaseModule,
-    RedisModule,
     VotersModule,
     ThrottlerModule.forRoot({
       throttlers: [
