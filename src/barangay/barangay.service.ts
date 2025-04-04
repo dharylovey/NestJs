@@ -24,12 +24,24 @@ export class BarangayService {
       },
     });
   }
-  findAll() {
-    return `This action returns all barangay`;
+  async findAll() {
+    return await this.prismaService.barangay.findMany();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} barangay`;
+  async findByMunicipalityId(municipalityId: number) {
+    return await this.prismaService.barangay.findMany({
+      where: { municipalityId },
+    });
+  }
+
+  async findOne(id: number) {
+    const barangay = await this.prismaService.barangay.findUnique({
+      where: { id },
+    });
+    if (!barangay) {
+      throw new NotFoundException('Barangay not found');
+    }
+    return barangay;
   }
 
   update(id: number, updateBarangayDto: UpdateBarangayDto) {

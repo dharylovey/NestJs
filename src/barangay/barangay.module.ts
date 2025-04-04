@@ -7,5 +7,6 @@ import { DatabaseModule } from '../database/database.module';
   imports: [DatabaseModule],
   controllers: [BarangayController],
   providers: [BarangayService],
+  exports: [BarangayService],
 })
 export class BarangayModule {}

@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
 import { VotersService } from './voters.service';
 import { VotersController } from './voters.controller';
-import { DatabaseModule } from 'src/database/database.module';
+import { DatabaseModule } from '../database/database.module';
+import { MunicipalityModule } from '../municipality/municipality.module';
+import { BarangayModule } from '../barangay/barangay.module';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, MunicipalityModule, BarangayModule],
   controllers: [VotersController],
-  providers: [VotersService, ],
+  providers: [VotersService],
 })
 export class VotersModule {}

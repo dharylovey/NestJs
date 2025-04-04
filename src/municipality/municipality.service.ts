@@ -1,4 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateMunicipalityDto } from './dto/create-municipality.dto';
 import { UpdateMunicipalityDto } from './dto/update-municipality.dto';
 import { DatabaseService } from '../database/database.service';
@@ -20,12 +24,22 @@ export class MunicipalityService {
     });
   }
 
-  findAll() {
-    return `This action returns all municipality`;
+  async findAll() {
+    const municipalities = await this.prismaService.municipality.findMany();
+    if (!municipalities) {
+      throw new NotFoundException('Municipality not found');
+    }
+    return municipalities;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} municipality`;
+  async findOne(id: number) {
+    const municipality = await this.prismaService.municipality.findUnique({
+      where: { id },
+    });
+    if (!municipality) {
+      throw new NotFoundException('Municipality not found');
+    }
+    return municipality;
   }
 
   update(id: number, updateMunicipalityDto: UpdateMunicipalityDto) {

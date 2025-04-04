@@ -1,34 +1,120 @@
 import {
   ConflictException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateVoterDto } from './dto/create-voter.dto';
 import { UpdateVoterDto } from './dto/update-voter.dto';
 import { DatabaseService } from '../database/database.service';
+import { MunicipalityService } from '../municipality/municipality.service';
+import { BarangayService } from '../barangay/barangay.service';
 
 @Injectable()
 export class VotersService {
-  constructor(private readonly prismaService: DatabaseService) {}
+  constructor(
+    private readonly prismaService: DatabaseService,
+    private readonly municipalityService: MunicipalityService,
+    private readonly barangayService: BarangayService,
+  ) {}
   async createVoter(createVoterDto: CreateVoterDto) {
+    const [existingBarangay, existingMunicipality] = await Promise.all([
+      this.barangayService.findOne(createVoterDto.barangayId),
+      this.municipalityService.findOne(createVoterDto.municipalityId),
+    ]);
+
+    if (!existingBarangay) {
+      throw new NotFoundException('Barangay not found');
+    }
+
+    if (!existingMunicipality) {
+      throw new NotFoundException('Municipality not found');
+    }
     return this.prismaService.voter.create({
       data: { ...createVoterDto },
+      include: { municipality: true, barangay: true },
     });
   }
 
-  async findAll() {
-    return await this.prismaService.voter.findMany();
+  async findAll(municipalityId?: number, barangayId?: number) {
+    if (barangayId && municipalityId) {
+      const barangay = await this.prismaService.barangay.findUnique({
+        where: { id: barangayId },
+        include: { municipality: true },
+      });
+
+      if (!barangay) {
+        throw new NotFoundException('Barangay not found');
+      }
+
+      if (barangay.municipalityId !== municipalityId) {
+        throw new ConflictException(
+          'Barangay does not belong to the specified municipality',
+        );
+      }
+    }
+
+    const voters = await this.prismaService.voter.findMany({
+      where: {
+        municipalityId: municipalityId || undefined,
+        barangayId: barangayId || undefined,
+      },
+      include: { municipality: true, barangay: true },
+    });
+
+    if (!voters || voters.length === 0) {
+      throw new NotFoundException('Voters not found');
+    }
+
+    return voters;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} voter`;
+  async findOne(id: string) {
+    const voter = await this.prismaService.voter.findUnique({
+      where: { id },
+    });
+    if (!voter) {
+      throw new NotFoundException('Voter not found');
+    }
+    return voter;
   }
 
-  update(id: number, updateVoterDto: UpdateVoterDto) {
-    return `This action updates a #${id} voter`;
+  async update(id: string, updateVoterDto: UpdateVoterDto) {
+    const voter = await this.prismaService.voter.findUnique({ where: { id } });
+    if (!voter) {
+      throw new NotFoundException('Voter not found');
+    }
+
+    if (updateVoterDto.municipalityId && updateVoterDto.barangayId) {
+      const barangay = await this.prismaService.barangay.findUnique({
+        where: { id: updateVoterDto.barangayId },
+        include: { municipality: true },
+      });
+
+      if (!barangay) {
+        throw new NotFoundException('Barangay not found');
+      }
+
+      if (barangay.municipalityId !== updateVoterDto.municipalityId) {
+        throw new ConflictException(
+          'Barangay does not belong to the specified municipality',
+        );
+      }
+    }
+    return await this.prismaService.voter.update({
+      where: { id },
+      data: updateVoterDto,
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} voter`;
+  async remove(id: string) {
+    const voterExist = await this.findOne(id);
+    if (!voterExist) {
+      throw new NotFoundException('Voter not found');
+    }
+    await this.prismaService.voter.delete({
+      where: { id },
+    });
+    return { message: 'Voter deleted successfully' };
   }
 }
