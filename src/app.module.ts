@@ -25,7 +25,7 @@ import { BarangayModule } from './barangay/barangay.module';
       throttlers: [
         {
           ttl: 60,
-          limit: 10000,
+          limit: 10,
         },
       ],
     }),
