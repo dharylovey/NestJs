@@ -68,7 +68,7 @@ export class AuthController {
     }
     res.clearCookie('Authentication');
     res.clearCookie('RefreshToken');
-    await this.authService.logout(req.user.id);
+    await this.authService.logout();
     return { message: 'Logout successful' };
   }
 
