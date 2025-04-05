@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateMunicipalityDto } from './dto/create-municipality.dto';
@@ -19,9 +20,16 @@ export class MunicipalityService {
     if (existingMunicipality) {
       throw new ConflictException('Municipality already exists');
     }
-    return await this.prismaService.municipality.create({
-      data: { ...createMunicipalityDto },
-    });
+    try {
+      return await this.prismaService.municipality.create({
+        data: { ...createMunicipalityDto },
+      });
+    } catch (error) {
+      if (error.code === 'P2002') {
+        throw new ConflictException('Municipality already exists');
+      }
+      throw new InternalServerErrorException('Failed to create municipality');
+    }
   }
 
   async findAll() {
@@ -46,6 +54,16 @@ export class MunicipalityService {
   }
 
   async update(id: number, updateMunicipalityDto: UpdateMunicipalityDto) {
+    if (updateMunicipalityDto.name) {
+      const nameExists = await this.prismaService.municipality.findUnique({
+        where: { name: updateMunicipalityDto.name },
+      });
+
+      if (nameExists && nameExists.id !== id) {
+        throw new ConflictException('Municipality name already exists');
+      }
+    }
+
     const existingMunicipality =
       await this.prismaService.municipality.findUnique({
         where: { id },
@@ -55,14 +73,22 @@ export class MunicipalityService {
       throw new NotFoundException('Municipality not found');
     }
 
-    const updatedMunicipality = await this.prismaService.municipality.update({
-      where: { id },
-      data: { ...updateMunicipalityDto },
-    });
-    return {
-      message: 'Municipality updated successfully',
-      data: updatedMunicipality,
-    };
+    try {
+      const updatedMunicipality = await this.prismaService.municipality.update({
+        where: { id },
+        data: { ...updateMunicipalityDto },
+      });
+
+      return {
+        message: 'Municipality updated successfully',
+        data: updatedMunicipality,
+      };
+    } catch (error) {
+      if (error.code === 'P2002') {
+        throw new ConflictException('Municipality name already exists');
+      }
+      throw new InternalServerErrorException('Failed to update municipality');
+    }
   }
 
   async remove(id: number) {
@@ -76,28 +102,34 @@ export class MunicipalityService {
       throw new NotFoundException('Municipality not found');
     }
 
-    // Delete all voters associated with barangays in this municipality
-    await this.prismaService.voter.deleteMany({
-      where: {
-        barangayId: {
-          in: existingMunicipality.barangays.map((barangay) => barangay.id),
+    try {
+      // Delete all voters associated with barangays in this municipality
+      await this.prismaService.voter.deleteMany({
+        where: {
+          barangayId: {
+            in: existingMunicipality.barangays.map((barangay) => barangay.id),
+          },
         },
-      },
-    });
+      });
 
-    // Delete all barangays associated with the municipality
-    await this.prismaService.barangay.deleteMany({
-      where: { municipalityId: id },
-    });
+      // Delete all barangays associated with the municipality
+      await this.prismaService.barangay.deleteMany({
+        where: { municipalityId: id },
+      });
 
-    // Finally, delete the municipality
-    const deletedMunicipality = await this.prismaService.municipality.delete({
-      where: { id },
-    });
+      // Finally, delete the municipality
+      const deletedMunicipality = await this.prismaService.municipality.delete({
+        where: { id },
+      });
 
-    return {
-      message: 'Municipality deleted successfully',
-      data: deletedMunicipality,
-    };
+      return {
+        message: 'Municipality deleted successfully',
+        data: deletedMunicipality,
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Failed to delete municipality and related records',
+      );
+    }
   }
 }

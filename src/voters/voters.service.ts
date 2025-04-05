@@ -30,10 +30,23 @@ export class VotersService {
     if (!existingMunicipality) {
       throw new NotFoundException('Municipality not found');
     }
-    return this.prismaService.voter.create({
-      data: { ...createVoterDto },
-      include: { municipality: true, barangay: true },
-    });
+
+    if (existingBarangay.municipalityId !== existingMunicipality.id) {
+      throw new ConflictException(
+        'Barangay does not belong to the selected municipality',
+      );
+    }
+    try {
+      return this.prismaService.voter.create({
+        data: { ...createVoterDto },
+        include: { municipality: true, barangay: true },
+      });
+    } catch (error) {
+      if (error.code === 'P2002') {
+        throw new ConflictException('Voter already exists');
+      }
+      throw new InternalServerErrorException('Failed to create voter');
+    }
   }
 
   async findAll(municipalityId?: number, barangayId?: number) {
@@ -63,7 +76,7 @@ export class VotersService {
     });
 
     if (!voters || voters.length === 0) {
-      throw new NotFoundException('Voters not found');
+      throw new NotFoundException('No voters found');
     }
 
     return voters;
@@ -87,7 +100,7 @@ export class VotersService {
 
     if (updateVoterDto.municipalityId && updateVoterDto.barangayId) {
       const barangay = await this.prismaService.barangay.findUnique({
-        where: { id: updateVoterDto.barangayId },
+        where: { id: updateVoterDto.barangayId ?? voter.barangayId },
         include: { municipality: true },
       });
 
@@ -108,10 +121,7 @@ export class VotersService {
   }
 
   async remove(id: string) {
-    const voterExist = await this.findOne(id);
-    if (!voterExist) {
-      throw new NotFoundException('Voter not found');
-    }
+    await this.findOne(id);
     await this.prismaService.voter.delete({
       where: { id },
     });

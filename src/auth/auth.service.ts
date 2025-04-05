@@ -106,18 +106,9 @@ export class AuthService {
     }
   }
 
-  async logout(userId: string): Promise<void> {}
-
-  // private async generateAccessToken(userId: string) {
-  //   const accessToken = await this.jwtService.signAsync(
-  //     { sub: userId },
-  //     {
-  //       secret: this.configService.get<string>('JWT_SECRET'),
-  //       expiresIn: this.configService.get<string>('JWT_EXPIRES_IN'),
-  //     },
-  //   );
-  //   return { accessToken };
-  // }
+  async logout(): Promise<{ message: string }> {
+    return { message: 'Logout successful' };
+  }
 
   private async generateTokens(
     userId: string,

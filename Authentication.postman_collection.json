@@ -1,0 +1,211 @@
+{
+	"info": {
+		"_postman_id": "07b96e63-a0f3-4be6-bbb9-ccb2ca92613e",
+		"name": "Authentication",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "40644528"
+	},
+	"item": [
+		{
+			"name": "logout",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"email\": \"admin1@mail.com\",\r\n  \"password\": \"admin\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://dharylinfotech.koyeb.app/auth/logout",
+					"protocol": "https",
+					"host": [
+						"dharylinfotech",
+						"koyeb",
+						"app"
+					],
+					"path": [
+						"auth",
+						"logout"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "login",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Authorization",
+						"type": "text"
+					},
+					{
+						"key": "",
+						"value": "U2Uet04qN8hQ2xcZe1MlYr23oOwBB0R5/rXEcA3DMTU=",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n   \"email\": \"dharyl@gmail.com\",\r\n  \"password\": \"Qwerty!23\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://dharylinfotech.koyeb.app/auth/login",
+					"protocol": "https",
+					"host": [
+						"dharylinfotech",
+						"koyeb",
+						"app"
+					],
+					"path": [
+						"auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "register",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Authorization",
+						"type": "text"
+					},
+					{
+						"key": "",
+						"value": "U2Uet04qN8hQ2xcZe1MlYr23oOwBB0R5/rXEcA3DMTU=",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\": \"dharyl\",\r\n   \"email\": \"dharyl@gmail.com\",\r\n  \"password\": \"Qwerty!23\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://dharylinfotech.koyeb.app/auth/register",
+					"protocol": "https",
+					"host": [
+						"dharylinfotech",
+						"koyeb",
+						"app"
+					],
+					"path": [
+						"auth",
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "refresh",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTc0MjkyMTE4NCwiZXhwIjoxNzQzNTI1OTg0fQ.aFhwXL6UMtScbcpQyEwf3djaX7TtCVsP_4Vali8EhLo",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "// refresh token",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://dharylinfotech.koyeb.app/auth/refresh",
+					"protocol": "https",
+					"host": [
+						"dharylinfotech",
+						"koyeb",
+						"app"
+					],
+					"path": [
+						"auth",
+						"refresh"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "me",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTc0MjkyMDk0MywiZXhwIjoxNzQyOTIwOTczfQ.JGm-7_Etrv9VkcmM66Bi36xcchkxYb4aRtAydimTvG8",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "U2Uet04qN8hQ2xcZe1MlYr23oOwBB0R5/rXEcA3DMTU=",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://dharylinfotech.koyeb.app/auth/session",
+					"protocol": "https",
+					"host": [
+						"dharylinfotech",
+						"koyeb",
+						"app"
+					],
+					"path": [
+						"auth",
+						"session"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
